@@ -67,6 +67,9 @@ Your final negative round score (or 0) maps to one of **45 Lemurian entities** f
 - Fonts loaded from Google Fonts (requires an internet connection for full styling; the game is otherwise fully offline).
 - All game state is held in memory; refreshing the page resets everything.
 
+## Special Thanks
+
+Luís Gonçalves ([gematriaresearch.blogspot.com](https://gematriaresearch.blogspot.com/)) — for help debugging.
 ## Credits
 
 Demonology, Numogram lore, and card mechanics derived from the Lemurian mythos associated with the CCRU (Cybernetic Culture Research Unit).
