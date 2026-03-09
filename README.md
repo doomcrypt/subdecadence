@@ -53,8 +53,6 @@ Your final negative round score (or 0) maps to one of **45 Lemurian entities** f
 - **Mesh number** and **Net-span** coordinates
 - **Associated card** from the deck
 
-A score of 0 summons **Lurgo**, the mildest entity. The deeper the negative score (down to −44), the more severe the demon called. Score −4,4 and you face **Ummnu (Om, Amen, Omen)** — Amphidemon of Earth-Screams.
-
 ## Strategy
 
 - **Prioritize high-value cross cards.** A 9 or 8 left unpaired is a heavy penalty. Find their complements (0 or 1) in your hand first.
