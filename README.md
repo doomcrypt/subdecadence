@@ -6,7 +6,7 @@ A single-file browser card game rooted in occult numerology and Lemurian demonol
 
 ## Play
 
-Open `Subdecadence.html` in any modern web browser. No installation, no dependencies, no server required.
+Open `Subdecadence.html` in any modern web browser: no installation, no dependencies, no server required.
 
 ## How to Play
 
@@ -20,8 +20,8 @@ Rounds proceed through four phases:
 
 1. **DEAL** — Five cards are placed in a cross formation (Center · West · East · North · South). These are your targets.
 2. **DRAW** — You draw five cards from the deck into your hand.
-3. **PAIR** — Match hand cards to cross cards. A pairing is only valid if the two values **sum to exactly 9** (e.g. 1+8, 3+6, 4+5, 0+9). Click a hand card, then a cross card to attempt a pair. Use **AUTO-PAIR** to let the engine greedily find all valid pairings.
-4. **RESOLVE** — Scoring is calculated and the round ends.
+3. **PAIR** — Match hand cards to cross cards. A pairing is only valid if the two values **sum to exactly 9** (e.g., 1+8, 3+6, 4+5, 0+9). Click a hand card, then a cross card to attempt a pair. Use **AUTO-PAIR** to let the engine greedily find all valid pairings.
+4. **RESOLVE** — Scoring is calculated, and the round ends.
 
 ### Scoring
 
@@ -53,7 +53,7 @@ Your final negative round score (or 0) maps to one of **45 Lemurian entities** f
 - **Mesh number** and **Net-span** coordinates
 - **Associated card** from the deck
 
-A score of 0 summons **Lurgo**, the mildest entity. The deeper the negative score (down to −44), the more severe the demon called. Score −44 and you face **Ummnu (Om, Amen, Omen)** — Amphidemon of Earth-Screams.
+A score of 0 summons **Lurgo**, the mildest entity. The deeper the negative score (down to −44), the more severe the demon called. Score −4,4 and you face **Ummnu (Om, Amen, Omen)** — Amphidemon of Earth-Screams.
 
 ## Strategy
 
