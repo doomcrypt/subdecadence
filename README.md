@@ -4,13 +4,9 @@
 
 A single-file browser card game rooted in occult numerology and Lemurian demonology. Play against a 40-card deck, pair cards that sum to 9, and discover which demon your final score summons.
 
----
-
 ## Play
 
 Open `Subdecadence.html` in any modern web browser. No installation, no dependencies, no server required.
-
----
 
 ## How to Play
 
@@ -48,8 +44,6 @@ Examples:
 
 Your cumulative **Angelic Index** tracks all positive scores across the game — a measure of the light generated before the fall.
 
----
-
 ## The Demons
 
 Your final negative round score (or 0) maps to one of **45 Lemurian entities** from the Numogram — a fictional occult system. The result screen reveals:
@@ -61,16 +55,12 @@ Your final negative round score (or 0) maps to one of **45 Lemurian entities** f
 
 A score of 0 summons **Lurgo**, the mildest entity. The deeper the negative score (down to −44), the more severe the demon called. Score −44 and you face **Ummnu (Om, Amen, Omen)** — Amphidemon of Earth-Screams.
 
----
-
 ## Strategy
 
 - **Prioritize high-value cross cards.** A 9 or 8 left unpaired is a heavy penalty. Find their complements (0 or 1) in your hand first.
 - **Chase the big differences.** A 0+9 pairing scores +9 — the maximum yield from a single pair. A 4+5 scores only +1.
 - **AUTO-PAIR is greedy, not optimal.** It finds the first valid pair it can, which may not maximize your score. Manual pairing can outperform it when multiple valid pairings compete for the same cards.
 - **Watch the deck count.** The game ends if fewer than 10 cards remain — plan your rounds accordingly.
-
----
 
 ## Technical Notes
 
@@ -79,8 +69,6 @@ A score of 0 summons **Lurgo**, the mildest entity. The deeper the negative scor
 - Fonts loaded from Google Fonts (requires an internet connection for full styling; the game is otherwise fully offline).
 - All game state is held in memory; refreshing the page resets everything.
 
----
-
 ## Credits
 
-Demonology and Numogram lore derived from the Lemurian mythos associated with the CCRU (Cybernetic Culture Research Unit). Card system and game mechanics original to this implementation.
+Demonology, Numogram lore, and card mechanics derived from the Lemurian mythos associated with the CCRU (Cybernetic Culture Research Unit).
