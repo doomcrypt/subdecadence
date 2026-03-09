@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUBDECADENCE :: Lemurian Time-Sorcery</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #000000;
+    --deep: #050508;
+    --abyss: #0a0a12;
+    --neon-green: #00ff41;
+    --neon-dim: #00cc33;
+    --neon-ghost: rgba(0,255,65,0.08);
+    --neon-glow: 0 0 8px #00ff41, 0 0 20px rgba(0,255,65,0.4);
+    --acid: #b8ff00;
+    --blood: #ff2244;
+    --gold: #c8a84b;
+    --pale: #aabbaa;
+    --card-bg: #0d1a0d;
+    --card-border: #1a3a1a;
+    --inactive: #223322;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--void);
+    color: var(--neon-green);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Noise texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.3;
+  }
+
+  /* Grid bg */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,65,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,65,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 10;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 30px 0 20px;
+    border-bottom: 1px solid var(--inactive);
+    margin-bottom: 30px;
+  }
+
+  .header-demon {
+    font-family: 'UnifrakturMaguntia', cursive;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 8px;
+  }
+
+  .header-title {
+    font-family: 'VT323', monospace;
+    font-size: clamp(52px, 9vw, 88px);
+    color: var(--neon-green);
+    text-shadow: var(--neon-glow);
+    letter-spacing: 12px;
+    line-height: 1;
+    animation: flicker 8s infinite;
+  }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--neon-dim);
+    letter-spacing: 4px;
+    margin-top: 10px;
+    opacity: 0.6;
+  }
+
+  @keyframes flicker {
+    0%, 94%, 100% { opacity: 1; }
+    95% { opacity: 0.85; }
+    96% { opacity: 1; }
+    97% { opacity: 0.6; }
+    98% { opacity: 1; }
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,255,65,0.04);
+    border: 1px solid var(--inactive);
+    padding: 10px 16px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+
+  .status-item span { color: var(--gold); }
+  .status-score { color: var(--neon-green); font-size: 16px; }
+  .status-score.negative { color: var(--blood); text-shadow: 0 0 8px var(--blood); }
+  .status-score.zero { color: var(--acid); text-shadow: 0 0 8px var(--acid); }
+
+  /* GAME AREA */
+  .game-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .game-layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: rgba(0,255,65,0.02);
+    border: 1px solid var(--inactive);
+    padding: 16px;
+  }
+
+  .panel-title {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .panel-subtitle {
+    font-size: 10px;
+    color: rgba(0,255,65,0.4);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  /* ATLANTEAN CROSS */
+  .atlantean-cross {
+    display: grid;
+    grid-template-areas:
+      ". top ."
+      "left center right"
+      ". bot1 ."
+      ". bot2 .";
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto auto;
+    gap: 8px;
+    justify-items: center;
+  }
+
+  .cross-slot[data-pos="north"]  { grid-area: top; }
+  .cross-slot[data-pos="west"]   { grid-area: left; }
+  .cross-slot[data-pos="center"] { grid-area: center; }
+  .cross-slot[data-pos="east"]   { grid-area: right; }
+  .cross-slot[data-pos="south"]  { grid-area: bot1; }
+  .cross-slot[data-pos="south2"] { grid-area: bot2; }
+
+  /* CARDS */
+  .card {
+    width: 72px;
+    height: 100px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: default;
+    transition: all 0.2s ease;
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    user-select: none;
+  }
+
+  .card.empty {
+    border: 1px dashed rgba(0,255,65,0.15);
+    background: transparent;
+  }
+
+  .card.empty::after {
+    content: '?';
+    font-family: 'VT323', monospace;
+    font-size: 32px;
+    color: rgba(0,255,65,0.1);
+  }
+
+  .card.face-down {
+    background: repeating-linear-gradient(
+      45deg,
+      #060f06,
+      #060f06 4px,
+      #0a160a 4px,
+      #0a160a 8px
+    );
+    cursor: default;
+  }
+
+  .card.face-down::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(0,255,65,0.12);
+  }
+
+  .card.revealed {
+    animation: reveal 0.3s ease;
+    border-color: rgba(0,255,65,0.4);
+  }
+
+  .card.paired {
+    border-color: var(--acid) !important;
+    box-shadow: 0 0 12px rgba(184,255,0,0.3);
+    opacity: 0.7;
+  }
+
+  .card.unpaired {
+    border-color: var(--blood) !important;
+    box-shadow: 0 0 8px rgba(255,34,68,0.3);
+  }
+
+  .card.selectable {
+    cursor: pointer;
+    border-color: rgba(0,255,65,0.5);
+  }
+
+  .card.selectable:hover {
+    border-color: var(--neon-green);
+    box-shadow: var(--neon-glow);
+    transform: translateY(-2px);
+  }
+
+  .card.selected {
+    border-color: var(--acid) !important;
+    box-shadow: 0 0 16px rgba(184,255,0,0.5);
+    transform: translateY(-4px);
+  }
+
+  @keyframes reveal {
+    from { transform: rotateY(90deg); opacity: 0; }
+    to { transform: rotateY(0); opacity: 1; }
+  }
+
+  .card-value { line-height: 1; }
+  .card-suit { font-size: 18px; margin-top: 2px; opacity: 0.7; }
+
+  .suit-heart   { color: #ff6680; }
+  .suit-diamond { color: #ff8844; }
+  .suit-spade   { color: #aaffaa; }
+  .suit-club    { color: #88ddff; }
+
+  .cross-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .card-label {
+    font-size: 9px;
+    color: rgba(0,255,65,0.4);
+    letter-spacing: 1px;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  /* JS tooltip */
+  #card-tooltip {
+    position: fixed;
+    background: #050f05;
+    border: 1px solid var(--neon-dim);
+    color: var(--gold);
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    padding: 4px 10px;
+    pointer-events: none;
+    z-index: 2000;
+    display: none;
+    box-shadow: 0 0 8px rgba(0,255,65,0.2);
+  }
+
+  /* HAND (set 2) */
+  .hand-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-top: 8px;
+  }
+
+  /* LOG */
+  .log-panel {
+    border: 1px solid var(--inactive);
+    background: rgba(0,0,0,0.4);
+    padding: 12px;
+    height: 140px;
+    overflow-y: auto;
+    font-size: 11px;
+    line-height: 1.8;
+    letter-spacing: 1px;
+    color: rgba(0,255,65,0.6);
+    margin-bottom: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--inactive) transparent;
+  }
+
+  .log-panel .log-entry { border-bottom: none; }
+  .log-panel .log-entry.highlight { color: var(--neon-green); }
+  .log-panel .log-entry.warn { color: var(--blood); }
+  .log-panel .log-entry.good { color: var(--acid); }
+  .log-panel .log-entry.system { color: var(--gold); }
+  .log-panel .log-entry::before { content: '> '; }
+
+  /* BUTTONS */
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .btn {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    letter-spacing: 3px;
+    padding: 8px 22px;
+    border: 1px solid var(--neon-dim);
+    background: transparent;
+    color: var(--neon-green);
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn:hover:not(:disabled) {
+    background: rgba(0,255,65,0.08);
+    box-shadow: var(--neon-glow);
+    color: #ffffff;
+  }
+
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+
+  .btn:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+    border-color: var(--inactive);
+    color: var(--inactive);
+  }
+
+  .btn-primary {
+    border-color: var(--acid);
+    color: var(--acid);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: rgba(184,255,0,0.08);
+    box-shadow: 0 0 12px rgba(184,255,0,0.4);
+    color: #ffffff;
+  }
+
+  .btn-danger {
+    border-color: var(--blood);
+    color: var(--blood);
+  }
+
+  /* PHASE INDICATOR */
+  .phase-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+
+  .phase-step {
+    flex: 1;
+    max-width: 160px;
+    padding: 6px;
+    border: 1px solid var(--inactive);
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(0,255,65,0.3);
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+
+  .phase-step.active {
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+    background: rgba(0,255,65,0.06);
+    box-shadow: var(--neon-glow);
+  }
+
+  .phase-step.done {
+    border-color: var(--inactive);
+    color: rgba(0,255,65,0.2);
+    background: rgba(0,255,65,0.02);
+  }
+
+  /* RESULT SCREEN */
+  .result-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+    border: 1px solid var(--inactive);
+    background: rgba(0,0,0,0.8);
+    animation: reveal-screen 0.6s ease;
+    margin-bottom: 24px;
+  }
+
+  .result-screen.show { display: block; }
+
+  @keyframes reveal-screen {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-demon {
+    font-family: 'UnifrakturMaguntia', cursive;
+    font-size: 48px;
+    color: var(--blood);
+    text-shadow: 0 0 20px rgba(255,34,68,0.5);
+    margin-bottom: 8px;
+  }
+
+  .result-score-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 6px;
+  }
+
+  .result-score-num {
+    font-family: 'VT323', monospace;
+    font-size: 72px;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+
+  .result-score-label { font-size: 11px; letter-spacing: 4px; color: var(--blood); margin-bottom: 6px; }
+  .result-score-num.neg { color: var(--blood); text-shadow: 0 0 20px rgba(255,34,68,0.6); }
+  .result-score-num.zero { color: var(--blood); text-shadow: 0 0 20px rgba(255,34,68,0.6); }
+  .result-angelic-wrap { margin: 0 auto 18px; padding: 10px 24px; display: inline-block; }
+  .result-angelic-label { font-size: 10px; letter-spacing: 4px; color: rgba(100,200,255,0.5); margin-bottom: 2px; }
+  .result-angelic-num { font-family: 'VT323', monospace; font-size: 72px; line-height: 1; color: #64c8ff; text-shadow: 0 0 16px rgba(100,200,255,0.5); margin-bottom: 2px; }
+
+  .result-meta {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(0,255,65,0.5);
+    margin-bottom: 12px;
+    line-height: 2;
+  }
+  .result-meta span { color: var(--gold); }
+
+  .result-lore {
+    max-width: 500px;
+    margin: 0 auto 20px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: rgba(200,168,75,0.7);
+    letter-spacing: 1px;
+    border-top: 1px solid var(--inactive);
+    padding-top: 16px;
+  }
+
+  /* RULES PANEL */
+  .rules-toggle {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .rules-panel {
+    display: none;
+    border: 1px solid var(--inactive);
+    padding: 20px;
+    font-size: 12px;
+    line-height: 2;
+    color: rgba(200,220,200,0.7);
+    margin-bottom: 24px;
+    background: rgba(0,0,0,0.4);
+  }
+
+  .rules-panel.show { display: block; }
+
+  .rules-panel h3 {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 4px;
+    margin: 16px 0 6px;
+    text-transform: uppercase;
+  }
+
+  .rules-panel h3:first-child { margin-top: 0; }
+
+  .pos-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 11px;
+  }
+
+  .pos-table td {
+    padding: 4px 12px;
+    border: 1px solid var(--inactive);
+    color: rgba(200,255,200,0.6);
+  }
+
+  .pos-table td:first-child { color: var(--gold); letter-spacing: 2px; }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    font-size: 10px;
+    color: rgba(0,255,65,0.2);
+    letter-spacing: 3px;
+    padding: 20px 0;
+    border-top: 1px solid var(--inactive);
+  }
+
+  /* Pair indicator */
+  .pair-indicator {
+    font-size: 10px;
+    color: var(--acid);
+    text-align: center;
+    letter-spacing: 2px;
+    min-height: 16px;
+    margin-bottom: 8px;
+  }
+
+  /* Round history */
+  .round-history {
+    font-size: 11px;
+    color: rgba(0,255,65,0.4);
+    letter-spacing: 1px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="container">
+
+  <header class="header">
+    <div class="header-demon">Pandemonium :: Governed by Tokhatto</div>
+    <div class="header-title">SUBDECADENCE</div>
+    <div class="header-sub">lemurian time-sorcery :: atlantean cross spread :: digital hyperstition</div>
+  </header>
+
+  <div class="phase-bar">
+    <div class="phase-step" id="phase-0">DEAL CROSS</div>
+    <div class="phase-step" id="phase-1">DRAW HAND</div>
+    <div class="phase-step" id="phase-2">PAIR CARDS</div>
+    <div class="phase-step" id="phase-3">RESOLVE</div>
+  </div>
+
+  <div class="status-bar">
+    <div>ROUND <span id="round-num">-</span></div>
+    <div>DECK <span id="deck-count">40</span></div>
+    <div>ROUND SCORE: <span id="round-score-display">-</span></div>
+  </div>
+
+  <div class="game-layout">
+    <!-- ATLANTEAN CROSS -->
+    <div class="panel">
+      <div class="panel-title">Atlantean Cross</div>
+      <div class="panel-subtitle">set one :: the spread</div>
+      <div class="atlantean-cross" id="cross">
+        <div class="cross-slot" data-pos="north">
+          <div class="card empty" id="card-north"></div>
+          <div class="card-label">IV :: far future</div>
+        </div>
+        <div class="cross-slot" data-pos="west">
+          <div class="card empty" id="card-west"></div>
+          <div class="card-label">II :: destructive</div>
+        </div>
+        <div class="cross-slot" data-pos="center">
+          <div class="card empty" id="card-center"></div>
+          <div class="card-label">I :: mem &amp; dreams</div>
+        </div>
+        <div class="cross-slot" data-pos="east">
+          <div class="card empty" id="card-east"></div>
+          <div class="card-label">III :: creative</div>
+        </div>
+        <div class="cross-slot" data-pos="south">
+          <div class="card empty" id="card-south"></div>
+          <div class="card-label">V :: deep past</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HAND / SET 2 -->
+    <div class="panel">
+      <div class="panel-title">Set Two :: Hand</div>
+      <div class="panel-subtitle">draw cards to pair with the cross</div>
+      <div class="pair-indicator" id="pair-indicator"></div>
+      <div class="hand-row" id="hand-row">
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+        <div class="card empty"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="log-panel" id="log"></div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="btn" id="btn-start" onclick="SFX.click();startGame()">NEW GAME</button>
+    <button class="btn btn-primary" id="btn-deal" onclick="SFX.click();dealCross()" disabled>DEAL CROSS</button>
+    <button class="btn" id="btn-draw" onclick="SFX.click();drawHand()" disabled>DRAW HAND</button>
+    <button class="btn btn-primary" id="btn-resolve" onclick="SFX.click();autoPair();resolveRound()" disabled>RESOLVE</button>
+    <button class="btn" id="btn-rules" onclick="SFX.click();toggleRules()">RULES</button>
+  </div>
+
+  <!-- ROUND HISTORY -->
+  <div class="round-history" id="round-history"></div>
+
+  <!-- RESULT -->
+  <div class="result-screen" id="result-screen">
+    <div class="result-demon" id="result-demon-name"></div>
+    <div class="result-score-label" style="color:var(--blood)">ROUND SCORE</div>
+    <div class="result-score-num" id="result-score-num"></div>
+    <div class="result-angelic-wrap">
+      <div class="result-angelic-label">ANGELIC INDEX</div>
+      <div class="result-angelic-num" id="result-angelic-num">0</div>
+    </div>
+    <div class="result-meta" id="result-meta"></div>
+  <div class="result-lore" id="result-lore"></div>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="SFX.click();startGame()">NEW GAME</button>
+    </div>
+  </div>
+
+  <!-- RULES -->
+  <div class="rules-panel" id="rules-panel">
+    <h3>Overview</h3>
+    Subdecadence is the Lemurian form of the CCRU's card game, governed by the great lemur Tokhatto. Unlike Decadence (which targets sums of 10), Subdecadence pairs cards that sum to <b style="color:var(--acid)">9</b>. It functions simultaneously as a game, a divination tool, and a system of time-sorcery.
+
+    <h3>The Deck</h3>
+    A standard 52-card deck stripped to 40 cards. Aces =1, 10s =0, and face cards are removed.
+
+    <h3>Atlantean Cross Positions</h3>
+    <table class="pos-table">
+      <tr><td>I — CENTER</td><td>Memories and Dreams</td></tr>
+      <tr><td>II — WEST</td><td>Destructive Influences</td></tr>
+      <tr><td>III — EAST</td><td>Creative Influences</td></tr>
+      <tr><td>IV — NORTH</td><td>Far Future</td></tr>
+      <tr><td>V — SOUTH</td><td>Deep Past</td></tr>
+    </table>
+
+    <h3>How to Play</h3>
+    1. Deal 5 cards face-up into the Atlantean Cross (Set One).<br>
+    2. Draw 5 more cards (Set Two / Hand).<br>
+    3. Pair hand cards with cross cards that sum to 9: (9+0), (8+1), (7+2), (6+3), (5+4).<br>
+    4. Each pair scores <b style="color:var(--acid)">+difference</b> (e.g. 7+2 = +5).<br>
+    5. Each unpaired cross card scores <b style="color:var(--blood)">−its value</b>.<br>
+    6. If round score ≥ 0: continue — draw another set of 5, add to running total.<br>
+    7. If round score &lt; 0: game ends. Call the lemur whose mesh-number equals your final score.
+
+    <h3>Winning</h3>
+    The game ends when round score ≤ 0 or the deck is exhausted.
+  </div>
+
+  <footer class="footer">
+    CCRU · DIGITAL HYPERSTITION · PANDEMONIUM MATRIX · TIME-SORCERY ENGINE v9.0
+  </footer>
+</div>
+
+<div id="card-tooltip"></div>
+<script>
+// =============================================
+// GAME STATE
+// =============================================
+const SUITS = ['♠','♥','♦','♣'];
+const SUIT_CLASSES = ['suit-spade','suit-heart','suit-diamond','suit-club'];
+const SUIT_NAMES = ['spades','hearts','diamonds','clubs'];
+// Values 0 (ten) through 9
+const VALUES = [0,1,2,3,4,5,6,7,8,9];
+const VALUE_LABELS = ['0','1','2','3','4','5','6','7','8','9'];
+
+// Lemur/demon table for scores 0..-44
+// CARD-TO-DEMON correspondence:
+// Each card { pip, suit } maps to exactly one demon.
+// suit: 0=spades(Mj-), 1=hearts(Mn+), 2=diamonds(Mn-), 3=clubs(Mj+)
+// pip: 1-9 (matching VALUE array). Queens (pip 0) have no mesh correspondence in standard play.
+// Joker = Katak (mesh-14). Xenodemons/Syzygetics with no card get card: null.
+
+const CARD_TO_MESH = {};  // key: "pip-suit" -> mesh number
+const MESH_TO_CARD = {};  // mesh number -> { pip, suit } or null
+
+const DEMONS = {
+  0:  { name: "Lurgo (Legba)",          type: "Amphidemon of Openings",                        attrs: "Terminal Initiator, Door of Doors, Spinal-voyage rites.",           netspan: "1::0", card: {pip:7, suit:3} },
+  1:  { name: "Duoddod",                type: "Amphidemon of Abstract Addiction",               attrs: "Duplicitous Redoubler, Pineal-regression, digital exactitude.",      netspan: "2::0", card: {pip:8, suit:3} },
+  2:  { name: "Doogu (The Blob)",       type: "Cyclic Chronodemon of Splitting-Waters",         attrs: "Original-Schism, primordial breath, ambivalent capture.",             netspan: "2::1", card: {pip:1, suit:1} },
+  3:  { name: "Ixix (Yix)",             type: "Chaotic Xenodemon of Cosmic Indifference",       attrs: "Abductor, occult terrestrial history.",                               netspan: "3::0", card: {pip:0, suit:3} },
+  4:  { name: "Ixigool (Djinn of the Magi)", type: "Amphidemon of Tridentity",                 attrs: "Over-Ghoul, unimpeded ascent, ultimate implications.",                netspan: "3::1", card: {pip:4, suit:1} },
+  5:  { name: "Ixidod (King Sid)",      type: "Amphidemon of Escape-velocity",                 attrs: "Zombie-Maker, crises through excess, illusion of progress.",          netspan: "3::2", card: {pip:5, suit:1} },
+  6:  { name: "Krako (Kru, Karak-oa)", type: "Amphidemon of Burning-Hail",                    attrs: "Croaking Curse, subsidence, heaviness of fatality.",                  netspan: "4::0", card: {pip:9, suit:3} },
+  7:  { name: "Sukugool (Old Skug)",    type: "Cyclic Chronodemon of Deluge and Implosion",    attrs: "Sucking-Ghoul, cycle of creation/destruction, submersion.",           netspan: "4::1", card: {pip:3, suit:3} },
+  8:  { name: "Skoodu (Li'l Scud)",    type: "Cyclic Chronodemon of Switch-Crazes",           attrs: "Fashioner, historical time, passage through the deep.",               netspan: "4::2", card: {pip:2, suit:1} },
+  9:  { name: "Skarkix (Sharky)",       type: "Amphidemon of Anti-evolution",                  attrs: "Buzz-Cutter, hermetic abbreviations, apocalyptic rapture.",           netspan: "4::3", card: {pip:6, suit:3} },
+  10: { name: "Tokhatto (Old Toker)",   type: "Amphidemon of Talismania",                      attrs: "Decimal Camouflage, number as destiny, Angel of the Cards.",         netspan: "5::0", card: {pip:9, suit:0} },
+  11: { name: "Tukkamu",               type: "Cyclic Chronodemon of Pathogenesis",            attrs: "Occulturation, optimal maturation, rapid deterioration.",             netspan: "5::1", card: {pip:3, suit:0} },
+  12: { name: "Kuttadid (Kitty)",      type: "Cyclic Chronodemon of Precarious States",       attrs: "Ticking Machines, maintaining balance, exhaustive vigilance.",        netspan: "5::2", card: {pip:2, suit:2} },
+  13: { name: "Tikkitix (Tickler)",    type: "Amphidemon of Vortical Delirium",               attrs: "Clicking Menaces, swirl-patterns, mysterious disappearances.",        netspan: "5::3", card: {pip:6, suit:0} },
+  14: { name: "Katak",                 type: "Syzygetic Chronodemon of Cataclysmic Convergence", attrs: "Desolator, tail-chasing, panic and religious fervor.",            netspan: "5::4", card: {pip:0, suit:-1} },  // Joker
+  15: { name: "Tchu (Tchanul)",        type: "Chaotic Xenodemon of Ultimate Outsideness",     attrs: "Source of Subnothingness, cosmic deletions.",                         netspan: "6::0", card: {pip:0, suit:0} },
+  16: { name: "Djungo",               type: "Amphidemon of Subtle Involvements",             attrs: "Infiltrator, turbular fluids, surreptitious invasions.",              netspan: "6::1", card: {pip:4, suit:2} },
+  17: { name: "Djuddha (Judd Dread)", type: "Amphidemon of Artificial Turbulence",           attrs: "Decentred Threat, machine-vortex, storm peripheries.",                netspan: "6::2", card: {pip:5, suit:2} },
+  18: { name: "Djynxx (The Jinn)",     type: "Syzygetic Xenodemon of Time-Lapse",            attrs: "Child Stealer, abstract cyclones, dust spirals.",                     netspan: "6::3", card: null },
+  19: { name: "Tchakki (Chuckles)",    type: "Amphidemon of Combustion",                     attrs: "Bag of Tricks, quenching accidents, conflagrations.",                 netspan: "6::4", card: {pip:6, suit:1} },
+  20: { name: "Tchattuk (One Eyed Jack)", type: "Amphidemon of Unscreened Matrix",           attrs: "Pseudo-Basis, zero-gravity, cut-outs and UFO cover-ups.",             netspan: "6::5", card: {pip:6, suit:2} },
+  21: { name: "Puppo (The Pup)",       type: "Amphidemon of Larval Regression",              attrs: "Break-Outs, dissolving into slime, chthonic swallowings.",            netspan: "7::0", card: {pip:8, suit:0} },
+  22: { name: "Bubbamu (Bubs)",        type: "Cyclic Chronodemon of Relapse",                attrs: "After Babylon, hypersea, aquassassins.",                              netspan: "7::1", card: {pip:1, suit:2} },
+  23: { name: "Oddubb (Odba)",         type: "Syzygetic Chronodemon of Swamp-Labyrinths",    attrs: "Broken Mirror, time loops, glamour.",                                 netspan: "7::2", card: null },
+  24: { name: "Pabbakis (Pabz)",       type: "Amphidemon of Interference",                   attrs: "Dabbler, batrachian mutations, cans of worms.",                       netspan: "7::3", card: {pip:5, suit:3} },
+  25: { name: "Ababbatok (Abracadabra)", type: "Cyclic Chronodemon of Suspended Decay",      attrs: "Frankensteinian experimentation, purifications.",                      netspan: "7::4", card: {pip:2, suit:3} },
+  26: { name: "Papatakoo (Pataku)",    type: "Cyclic Chronodemon of Calendric Time",         attrs: "Ultimate success, rituals becoming nature.",                          netspan: "7::5", card: {pip:2, suit:0} },
+  27: { name: "Bobobja (Beelzebub)",   type: "Amphidemon of Teeming Pestilence",             attrs: "Strange lights in the swamp, swarmachines.",                          netspan: "7::6", card: {pip:5, suit:0} },
+  28: { name: "Minommo",               type: "Amphidemon of Submergance",                    attrs: "Shamanic voyage, dream sorcery.",                                     netspan: "8::0", card: {pip:7, suit:0} },
+  29: { name: "Mur Mur (Murrumur)",    type: "Syzygetic Chronodemon of the Deep Ones",       attrs: "Oceanic sensation, gilled-unlife.",                                   netspan: "8::1", card: null },
+  30: { name: "Nammamad",              type: "Cyclic Chronodemon of Subterranean Commerce",  attrs: "Voodoo in cyberspace, emergences.",                                   netspan: "8::2", card: {pip:1, suit:3} },
+  31: { name: "Mummumix (Mix-Up)",     type: "Amphidemon of Insidious Fog",                  attrs: "Ocean storms, diseases from outer-space.",                            netspan: "8::3", card: {pip:4, suit:3} },
+  32: { name: "Numko (Old Nuk)",       type: "Cyclic Chronodemon of Autochthony",            attrs: "Necrospeleology, vulcanism.",                                         netspan: "8::4", card: {pip:3, suit:1} },
+  33: { name: "Muntuk (Manitou)",      type: "Cyclic Chronodemon of Arid Seabeds",           attrs: "Ancient rivers, cloud-vaults.",                                       netspan: "8::5", card: {pip:3, suit:2} },
+  34: { name: "Mommoljo (Mama Jo)",    type: "Amphidemon of Xenogenesis",                    attrs: "Cosmobacterial exogermination, extraterrestrial residues.",            netspan: "8::6", card: {pip:4, suit:0} },
+  35: { name: "Mombbo",               type: "Cyclic Chronodemon of Hybridity",              attrs: "Ophidian transmutation, surreptitious colonization.",                 netspan: "8::7", card: {pip:1, suit:0} },
+  36: { name: "Uttunul",               type: "Syzygetic Xenodemon of Atonality",             attrs: "Crossing the iron-ocean, plutonics.",                                 netspan: "9::0", card: null },
+  37: { name: "Tutagool (Yettuk)",     type: "Amphidemon of Punctuality",                    attrs: "The dark arts, rusting iron.",                                        netspan: "9::1", card: {pip:7, suit:1} },
+  38: { name: "Unnunddo (The False Nun)", type: "Amphidemon of Endless Uncasing",            attrs: "Crypt-traffic, communication-grids.",                                 netspan: "9::2", card: {pip:8, suit:1} },
+  39: { name: "Ununuttix (Tick-Tock)", type: "Chaotic Xenodemon of Absolute Coincidence",   attrs: "Numerical connection through absence.",                               netspan: "9::3", card: {pip:0, suit:1} },
+  40: { name: "Ununak (Nuke)",         type: "Amphidemon of Convulsions",                    attrs: "Secrets of the blacksmiths, subterranean impulses.",                  netspan: "9::4", card: {pip:9, suit:1} },
+  41: { name: "Tukutu (Killer-Kate)",  type: "Amphidemon of Death-Strokes",                  attrs: "Crash-signals, barkerian scarring.",                                  netspan: "9::5", card: {pip:9, suit:2} },
+  42: { name: "Unnutchi (T'ai Chi)",   type: "Chaotic Xenodemon of Coiling Outsideness",     attrs: "Asymmetric zygopoise, cybernetic anomalies.",                         netspan: "9::6", card: {pip:0, suit:2} },
+  43: { name: "Nuttubab (Nut-Cracker)", type: "Amphidemon of Metaloid Unlife",               attrs: "Lunacies, dragon-lines.",                                             netspan: "9::7", card: {pip:8, suit:2} },
+  44: { name: "Ummnu (Om, Amen, Omen)", type: "Amphidemon of Earth-Screams",                 attrs: "Crust-friction, anorganic tension.",                                  netspan: "9::8", card: {pip:7, suit:2} },
+};
+
+// Build lookup tables after DEMONS is defined
+(function() {
+  for (const [mesh, d] of Object.entries(DEMONS)) {
+    MESH_TO_CARD[mesh] = d.card;
+    if (d.card && d.card.suit >= 0) {
+      CARD_TO_MESH[d.card.pip + '-' + d.card.suit] = Number(mesh);
+    }
+  }
+})();
+
+function cardToMesh(pip, suit) {
+  return CARD_TO_MESH[pip + '-' + suit] ?? null;
+}
+
+function getLemur(score) {
+  const key = Math.abs(score);
+  const d = DEMONS[key];
+  if (!d) return { name: `Unknown Entity`, lore: `Score ${score} lies outside the mapped numogram.`, netspan: '?', cardStr: '—' };
+  const SUIT_SYMBOLS = ['♠','♥','♦','♣'];
+  const SUIT_NAMES_FULL = ['Spades (Mj−)','Hearts (Mn+)','Diamonds (Mn−)','Clubs (Mj+)'];
+  let cardStr = '—';
+  if (d.card) {
+    if (d.card.suit === -1) {
+      cardStr = 'Joker';
+    } else {
+      const pipLabel = d.card.pip === 0 ? 'Q' : String(d.card.pip);
+      cardStr = pipLabel + SUIT_SYMBOLS[d.card.suit] + '  (' + SUIT_NAMES_FULL[d.card.suit] + ')';
+    }
+  }
+  return {
+    name: d.name,
+    lore: `${d.type}\n${d.attrs}`,
+    netspan: d.netspan,
+    cardStr,
+  };
+}
+
+// Return demon name for a specific card (used in card tooltip)
+function cardDemonName(pip, suit) {
+  const mesh = cardToMesh(pip, suit);
+  if (mesh === null) return null;
+  return DEMONS[mesh] ? `${DEMONS[mesh].name}  [Mesh-${String(mesh).padStart(2,'0')} :: ${DEMONS[mesh].netspan}]` : null;
+}
+
+
+
+// =============================================
+// DECK
+// =============================================
+let deck = [];
+let crossCards = [null,null,null,null,null]; // [center, west, east, north, south]
+let handCards = [];
+let pairings = {}; // handIndex -> crossIndex
+let selectedHand = null;
+let selectedCross = null;
+let gameState = 'idle'; // idle, dealing, drawing, pairing, resolved, gameover
+let runningScore = 0;
+let angelicIndex = 0;
+let negativeScore = 0;
+let roundNum = 0;
+let roundHistory = [];
+
+const crossPositions = ['center','west','east','north','south'];
+const crossLabels = ['I','II','III','IV','V'];
+
+function buildDeck() {
+  const d = [];
+  for (let s = 0; s < 4; s++) {
+    for (let v = 0; v < 10; v++) {
+      d.push({ suit: s, value: v });
+    }
+  }
+  return d;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function drawCard() {
+  if (deck.length === 0) return null;
+  return deck.pop();
+}
+
+// =============================================
+// LOG
+// =============================================
+function log(msg, cls='') {
+  const el = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry' + (cls ? ' ' + cls : '');
+  entry.textContent = msg;
+  el.appendChild(entry);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('log').innerHTML = '';
+}
+
+// =============================================
+// RENDER
+// =============================================
+function cardHTML(card, extra='') {
+  if (!card) return `<div class="card empty ${extra}"></div>`;
+  const vLabel = VALUE_LABELS[card.value];
+  const sc = SUIT_CLASSES[card.suit];
+  const s = SUITS[card.suit];
+  return `<div class="card revealed ${extra}">
+    <span class="card-value ${sc}">${vLabel}</span>
+    <span class="card-suit ${sc}">${s}</span>
+  </div>`;
+}
+
+function renderCross() {
+  crossPositions.forEach((pos, i) => {
+    const slot = document.getElementById('card-' + pos);
+    if (!slot) return;
+    const card = crossCards[i];
+    const isPaired = Object.values(pairings).includes(i);
+    const isUnpaired = gameState === 'resolved' && !isPaired && card !== null;
+    let extra = '';
+    if (isPaired) extra = 'paired';
+    else if (isUnpaired) extra = 'unpaired';
+    else if (gameState === 'pairing' && card !== null && !isPaired) extra = 'selectable';
+    if (selectedCross === i) extra = 'selected';
+
+    if (card) {
+      const vLabel = VALUE_LABELS[card.value];
+      const sc = SUIT_CLASSES[card.suit];
+      const s = SUITS[card.suit];
+      slot.className = `card revealed ${extra}`;
+      slot.innerHTML = `<span class="card-value ${sc}">${vLabel}</span><span class="card-suit ${sc}">${s}</span>`;
+      const cd = cardDemonName(card.value, card.suit);
+      if (cd) slot.setAttribute('data-demon', cd); else slot.removeAttribute('data-demon');
+      if (gameState === 'pairing' && !isPaired) {
+        slot.onclick = () => selectCross(i);
+        slot.style.cursor = 'pointer';
+      } else {
+        slot.onclick = null;
+        slot.style.cursor = 'default';
+      }
+    } else {
+      slot.className = 'card empty';
+      slot.innerHTML = '';
+      slot.onclick = null;
+      slot.removeAttribute('data-demon');
+    }
+  });
+}
+
+function renderHand() {
+  const row = document.getElementById('hand-row');
+  row.innerHTML = '';
+  if (handCards.length === 0) {
+    for (let i = 0; i < 5; i++) {
+      row.innerHTML += `<div class="card empty"></div>`;
+    }
+    return;
+  }
+  handCards.forEach((card, i) => {
+    const isPaired = pairings[i] !== undefined;
+    let extra = '';
+    if (isPaired) extra = 'paired';
+    else if (gameState === 'pairing') extra = 'selectable';
+    if (selectedHand === i) extra = 'selected';
+
+    const el = document.createElement('div');
+    const vLabel = VALUE_LABELS[card.value];
+    const sc = SUIT_CLASSES[card.suit];
+    const s = SUITS[card.suit];
+    el.className = `card revealed ${extra}`;
+    el.innerHTML = `<span class="card-value ${sc}">${vLabel}</span><span class="card-suit ${sc}">${s}</span>`;
+    const hd = cardDemonName(card.value, card.suit);
+    if (hd) el.setAttribute('data-demon', hd); else el.removeAttribute('data-demon');
+    if (gameState === 'pairing' && !isPaired) {
+      el.style.cursor = 'pointer';
+      el.onclick = () => selectHand(i);
+    }
+    row.appendChild(el);
+  });
+}
+
+function setPhase(n) {
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('phase-' + i);
+    if (i < n) el.className = 'phase-step done';
+    else if (i === n) el.className = 'phase-step active';
+    else el.className = 'phase-step';
+  }
+}
+
+function setBtn(id, enabled) {
+  const el = document.getElementById(id);
+  if (el) el.disabled = !enabled;
+}
+
+function updateStatus() {
+  document.getElementById('round-num').textContent = roundNum || '-';
+  document.getElementById('deck-count').textContent = deck.length;
+}
+
+function updateRoundHistory() {
+  const el = document.getElementById('round-history');
+  if (roundHistory.length === 0) { el.textContent = ''; return; }
+  el.textContent = 'ROUNDS: ' + roundHistory.map((s,i) => `R${i+1}:${s>=0?'+':''}${s}`).join('  ');
+}
+
+// =============================================
+// PAIRING LOGIC
+// =============================================
+function selectHand(i) {
+  if (pairings[i] !== undefined) return;
+  selectedHand = i;
+  document.getElementById('pair-indicator').textContent = `HAND CARD SELECTED: ${VALUE_LABELS[handCards[i].value]}  — select a cross card that sums to 9`;
+  renderHand();
+  renderCross();
+  tryPair();
+}
+
+function selectCross(i) {
+  if (Object.values(pairings).includes(i)) return;
+  selectedCross = i;
+  renderCross();
+  tryPair();
+}
+
+function tryPair() {
+  if (selectedHand === null || selectedCross === null) return;
+  const hCard = handCards[selectedHand];
+  const cCard = crossCards[selectedCross];
+  if (hCard.value + cCard.value === 9) {
+    pairings[selectedHand] = selectedCross;
+    SFX.pairSuccess(Math.abs(hCard.value - cCard.value));
+    log(`PAIR: ${VALUE_LABELS[hCard.value]}+${VALUE_LABELS[cCard.value]}=9 → score +${Math.abs(hCard.value - cCard.value)}`, 'good');
+    document.getElementById('pair-indicator').textContent = `✓ PAIR CONFIRMED: ${VALUE_LABELS[hCard.value]} + ${VALUE_LABELS[cCard.value]} = 9`;
+  } else {
+    SFX.pairFail();
+    log(`Cannot pair ${VALUE_LABELS[hCard.value]} + ${VALUE_LABELS[cCard.value]} = ${hCard.value + cCard.value} (must be 9)`, 'warn');
+    document.getElementById('pair-indicator').textContent = `✗ ${VALUE_LABELS[hCard.value]} + ${VALUE_LABELS[cCard.value]} = ${hCard.value + cCard.value} ≠ 9`;
+  }
+  selectedHand = null;
+  selectedCross = null;
+  renderHand();
+  renderCross();
+
+  // Check if any more pairings are possible
+  checkResolvable();
+}
+
+function checkResolvable() {
+  const unpairedCross = crossCards.map((c,i) => c !== null && !Object.values(pairings).includes(i) ? i : -1).filter(x => x >= 0);
+  const unpairedHand = handCards.map((c,i) => pairings[i] === undefined ? i : -1).filter(x => x >= 0);
+  let canPair = false;
+  for (const hi of unpairedHand) {
+    for (const ci of unpairedCross) {
+      if (handCards[hi].value + crossCards[ci].value === 9) { canPair = true; break; }
+    }
+    if (canPair) break;
+  }
+  if (!canPair) {
+    setBtn('btn-auto-pair', false);
+    setBtn('btn-resolve', true);
+    if (unpairedHand.length > 0 && unpairedCross.length > 0) {
+      log('No more valid pairings possible. Click RESOLVE.', 'highlight');
+    }
+  }
+}
+
+function autoPair() {
+  // Greedy auto-pairing — loop until no more valid pairs exist
+  let paired = true;
+  while (paired) {
+    paired = false;
+    const unpairedCross = crossCards.map((c,i) => c !== null && !Object.values(pairings).includes(i) ? i : -1).filter(x => x >= 0);
+    const unpairedHand = handCards.map((c,i) => pairings[i] === undefined ? i : -1).filter(x => x >= 0);
+    for (const hi of unpairedHand) {
+      for (const ci of unpairedCross) {
+        if (!Object.values(pairings).includes(ci) && handCards[hi].value + crossCards[ci].value === 9) {
+          pairings[hi] = ci;
+          const hv = VALUE_LABELS[handCards[hi].value];
+          const cv = VALUE_LABELS[crossCards[ci].value];
+          log(`AUTO-PAIR: ${hv}+${cv}=9 → +${Math.abs(handCards[hi].value - crossCards[ci].value)}`, 'good');
+          paired = true;
+          break;
+        }
+      }
+      if (paired) break;
+    }
+  }
+  renderHand();
+  renderCross();
+}
+
+// =============================================
+// GAME FLOW
+// =============================================
+function startGame() {
+  deck = shuffle(buildDeck());
+  crossCards = [null,null,null,null,null];
+  handCards = [];
+  pairings = {};
+  selectedHand = null;
+  selectedCross = null;
+  runningScore = 0;
+  angelicIndex = 0;
+  negativeScore = 0;
+  roundNum = 0;
+  roundHistory = [];
+  gameState = 'ready';
+
+  document.getElementById('result-screen').classList.remove('show');
+  crossPositions.forEach(pos => {
+    const slot = document.getElementById('card-' + pos);
+    if (slot) slot.removeAttribute('data-demon');
+  });
+  SFX.newGame();
+  clearLog();
+  log('NEW GAME INITIATED. Deck of 40 shuffled.', 'system');
+  log('Goal: score by pairing cross cards (sum to 9). Unpaired cross cards penalize.', '');
+
+  renderCross();
+  renderHand();
+  updateStatus();
+  updateRoundHistory();
+  document.getElementById('pair-indicator').textContent = '';
+  document.getElementById('round-score-display').textContent = '-';
+
+  setBtn('btn-deal', true);
+  setBtn('btn-draw', false);
+  setBtn('btn-auto-pair', false);
+  setBtn('btn-resolve', false);
+  setPhase(0);
+}
+
+function dealCross() {
+  if (deck.length < 5) {
+    log('Not enough cards to deal a cross.', 'warn');
+    return;
+  }
+  roundNum++;
+  pairings = {};
+  crossCards = [null,null,null,null,null];
+  handCards = [];
+  gameState = 'dealing';
+
+  log(`--- ROUND ${roundNum} ---`, 'system');
+
+  // Deal 5 to cross
+  SFX.cardDeal(0);
+  for (let i = 0; i < 5; i++) {
+    crossCards[i] = drawCard();
+  }
+  log(`CROSS: ${crossPositions.map((p,i) => crossLabels[i]+':'+VALUE_LABELS[crossCards[i].value]).join(' ')}`, 'highlight');
+
+  gameState = 'drawing';
+  renderCross();
+  renderHand();
+  updateStatus();
+  setPhase(1);
+  setBtn('btn-deal', false);
+  setBtn('btn-draw', true);
+  setBtn('btn-auto-pair', false);
+  setBtn('btn-resolve', false);
+}
+
+function drawHand() {
+  if (deck.length < 5) {
+    log('Not enough cards in deck.', 'warn');
+    // Draw whatever is left
+  }
+  handCards = [];
+  const toDraw = Math.min(5, deck.length);
+  SFX.drawHand(0);
+  for (let i = 0; i < toDraw; i++) {
+    handCards.push(drawCard());
+  }
+  log(`HAND: ${handCards.map(c => VALUE_LABELS[c.value]).join(' ')}`, 'highlight');
+
+  gameState = 'pairing';
+  renderHand();
+  updateStatus();
+  setPhase(2);
+  setBtn('btn-draw', false);
+  setBtn('btn-auto-pair', true);
+  setBtn('btn-resolve', true);
+  document.getElementById('pair-indicator').textContent = 'Select a HAND card, then a CROSS card that sums to 9.';
+
+  checkResolvable();
+}
+
+function resolveRound() {
+  gameState = 'resolved';
+
+  let roundScore = 0;
+  let pairedScore = 0;
+  // Paired: +difference
+  for (const [hi, ci] of Object.entries(pairings)) {
+    const hv = handCards[hi].value;
+    const cv = crossCards[ci].value;
+    const diff = Math.abs(hv - cv);
+    roundScore += diff;
+    pairedScore += diff;
+  }
+  // Unpaired cross: -value
+  const pairedCrossIndices = new Set(Object.values(pairings).map(Number));
+  for (let i = 0; i < 5; i++) {
+    if (crossCards[i] !== null && !pairedCrossIndices.has(i)) {
+      const penalty = crossCards[i].value;
+      roundScore -= penalty;
+      log(`UNPAIRED: ${crossPositions[i].toUpperCase()} [${VALUE_LABELS[penalty]}] → -${penalty}`, 'warn');
+    }
+  }
+
+  roundHistory.push(roundScore);
+  runningScore += roundScore;
+  angelicIndex += roundScore > 0 ? roundScore : 0;
+  document.getElementById('round-score-display').textContent = (roundScore >= 0 ? '+' : '') + roundScore;
+
+  log(`ROUND ${roundNum} SCORE: ${roundScore >= 0 ? '+' : ''}${roundScore}`, roundScore < 0 ? 'warn' : 'good');
+
+  renderCross();
+  renderHand();
+  updateStatus();
+  updateRoundHistory();
+  setPhase(3);
+  setBtn('btn-auto-pair', false);
+  setBtn('btn-resolve', false);
+
+  // Game ends on zero or negative round score OR deck exhausted
+  if (roundScore <= 0) {
+    SFX.resolveNegative();
+    negativeScore = roundScore;
+    if (roundScore < 0) log('Score negative — the aeon closes.', 'warn');
+    else log('Zero round — the aeon closes.', 'warn');
+    setTimeout(endGame, 1400);
+  } else if (deck.length < 10) {
+    SFX.resolveNegative();
+    negativeScore = runningScore;
+    log('Deck exhausted — the aeon closes.', 'warn');
+    setTimeout(endGame, 1400);
+  } else {
+    SFX.resolvePositive(roundScore);
+    log('Score positive. Continue — deal another cross.', '');
+    setBtn('btn-deal', true);
+    setPhase(0);
+    gameState = 'ready';
+  }
+}
+
+function endGame() {
+  gameState = 'gameover';
+  SFX.demonCall();
+  // Map score to demon index: negative scores index 1-44, zero/positive = Lurgo (0)
+  const demonIndex = Math.min(Math.abs(negativeScore), 44);
+  const lemur = getLemur(-demonIndex);
+  log(`GAME OVER :: ROUND SCORE: ${negativeScore}`, 'system');
+  log(`DEMON CALLED: ${lemur.name}`, 'warn');
+
+
+
+  const screen = document.getElementById('result-screen');
+  document.getElementById('result-demon-name').textContent = lemur.name;
+  const numEl = document.getElementById('result-score-num');
+  numEl.textContent = negativeScore;
+  numEl.className = 'result-score-num' + (negativeScore < 0 ? ' neg' : ' zero');
+  document.getElementById('result-angelic-num').textContent = (angelicIndex > 0 ? '+' : '') + angelicIndex;
+  document.querySelector('.result-angelic-wrap').style.display = angelicIndex > 0 ? 'inline-block' : 'none';
+  const loreParts = lemur.lore.split('\n');
+  const loreEl = document.getElementById('result-lore');
+  loreEl.innerHTML = loreParts.map((p,i) => i===0 ? `<em style="color:var(--gold);opacity:0.9">${p}</em>` : `<span>${p}</span>`).join('<br>');
+  const metaEl = document.getElementById('result-meta');
+  metaEl.innerHTML = `MESH-${String(demonIndex).padStart(2,'0')} &nbsp;|&nbsp; NET-SPAN <span>${lemur.netspan}</span> &nbsp;|&nbsp; CARD <span>${lemur.cardStr}</span>`;
+  screen.classList.add('show');
+
+  setBtn('btn-deal', false);
+  setBtn('btn-draw', false);
+  setBtn('btn-auto-pair', false);
+  setBtn('btn-resolve', false);
+}
+
+// =============================================
+// RULES TOGGLE
+// =============================================
+function toggleRules() {
+  const panel = document.getElementById('rules-panel');
+  panel.classList.toggle('show');
+  const btn1 = document.getElementById('btn-rules');
+  const showing = panel.classList.contains('show');
+  btn1.textContent = showing ? 'HIDE RULES' : 'RULES';
+}
+
+
+// =============================================
+// ── Audio Engine ──────────────────────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+
+function getACtx() {
+  if (!actx) actx = new AudioCtx();
+  return actx;
+}
+
+function playTone(freq, type, duration, volume=0.3, fadeOut=true) {
+  const ctx = getACtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime);
+  gain.gain.setValueAtTime(volume, ctx.currentTime);
+  if (fadeOut) gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+  osc.start();
+  osc.stop(ctx.currentTime + duration);
+}
+
+function stopAll() {
+  if (actx) {
+    actx.close();
+    actx = null;
+  }
+}
+
+function playClick() {
+  playTone(880, 'square', 0.04, 0.15);
+}
+
+function playFlip() {
+  playTone(440, 'square', 0.08, 0.2);
+  setTimeout(() => playTone(660, 'square', 0.06, 0.15), 60);
+}
+
+function playSyzygy(score) {
+  const base = 220 + score * 20;
+  [0, 4, 7, 12].forEach((semi, i) => {
+    setTimeout(() => {
+      playTone(base * Math.pow(2, semi/12), 'square', 0.18, 0.25);
+    }, i * 80);
+  });
+}
+
+function playNegative() {
+  playTone(110, 'sawtooth', 0.4, 0.35);
+  setTimeout(() => playTone(80, 'sawtooth', 0.5, 0.35), 100);
+}
+
+function playAeonEnd() {
+  [200, 180, 160, 120].forEach((f, i) => {
+    setTimeout(() => playTone(f, 'sawtooth', 0.3, 0.3), i * 150);
+  });
+}
+
+function playAeonWin() {
+  [261, 329, 392, 523].forEach((f, i) => {
+    setTimeout(() => playTone(f, 'square', 0.4, 0.3), i * 100);
+  });
+}
+
+// Positive resolve — carrier wave re-lock: slow LFO sub-bass pulse + sparse digital ticks
+function playResolvePositive() {
+  const ctx = getACtx();
+  const t = ctx.currentTime;
+
+  // Sub-bass carrier re-lock with LFO wobble
+  const osc1 = ctx.createOscillator();
+  const lfo1 = ctx.createOscillator();
+  const lfoGain1 = ctx.createGain();
+  const gain1 = ctx.createGain();
+  const filt1 = ctx.createBiquadFilter();
+  osc1.type = 'sine'; osc1.frequency.setValueAtTime(40, t);
+  osc1.frequency.exponentialRampToValueAtTime(44, t + 0.61);
+  lfo1.type = 'sine'; lfo1.frequency.value = 3.3;
+  lfoGain1.gain.value = 6;
+  lfo1.connect(lfoGain1); lfoGain1.connect(osc1.frequency);
+  filt1.type = 'lowpass'; filt1.frequency.value = 160;
+  gain1.gain.setValueAtTime(0.0001, t);
+  gain1.gain.linearRampToValueAtTime(0.15, t + 0.06);
+  gain1.gain.exponentialRampToValueAtTime(0.0001, t + 0.61);
+  osc1.connect(filt1); filt1.connect(gain1); gain1.connect(ctx.destination);
+  osc1.start(t); osc1.stop(t + 0.7);
+  lfo1.start(t); lfo1.stop(t + 0.7);
+
+  // Octave harmonic
+  const osc2 = ctx.createOscillator();
+  const gain2 = ctx.createGain();
+  const filt2 = ctx.createBiquadFilter();
+  osc2.type = 'sine'; osc2.frequency.setValueAtTime(80, t + 0.05);
+  osc2.frequency.exponentialRampToValueAtTime(88, t + 0.55);
+  filt2.type = 'lowpass'; filt2.frequency.value = 300;
+  gain2.gain.setValueAtTime(0.0001, t + 0.05);
+  gain2.gain.linearRampToValueAtTime(0.07, t + 0.13);
+  gain2.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+  osc2.connect(filt2); filt2.connect(gain2); gain2.connect(ctx.destination);
+  osc2.start(t + 0.05); osc2.stop(t + 0.65);
+
+  // Sparse digital ticks — clock re-syncing
+  [0, 0.09, 0.17].forEach(d => {
+    const bufSize = Math.ceil(ctx.sampleRate * 0.025);
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'highpass'; filt.frequency.value = 4000; filt.Q.value = 4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.06, t + d);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.025);
+    src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+    src.start(t + d); src.stop(t + d + 0.03);
+  });
+
+  // Faint high tone settling down
+  const osc3 = ctx.createOscillator();
+  const gain3 = ctx.createGain();
+  osc3.type = 'sine';
+  osc3.frequency.setValueAtTime(880, t + 0.1);
+  osc3.frequency.exponentialRampToValueAtTime(660, t + 0.5);
+  gain3.gain.setValueAtTime(0.0001, t + 0.1);
+  gain3.gain.linearRampToValueAtTime(0.03, t + 0.12);
+  gain3.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+  osc3.connect(gain3); gain3.connect(ctx.destination);
+  osc3.start(t + 0.1); osc3.stop(t + 0.55);
+}
+
+// Thin SFX wrapper so existing call sites still work
+const SFX = {
+  newGame()            { playFlip(); },
+  cardDeal()           { playFlip(); },
+  drawHand()           { playFlip(); },
+  pairSuccess(diff)    { playSyzygy(diff); },
+  pairFail()           { playNegative(); },
+  resolvePositive(score){ stopAll(); setTimeout(() => playSyzygy(score), 30); },
+  resolveNegative()    { playAeonEnd(); },
+  demonCall()          { playAeonEnd(); },
+  click()              { playClick(); },
+};
+
+
+// =============================================
+// CARD TOOLTIP
+// =============================================
+(function() {
+  const tip = document.getElementById('card-tooltip');
+
+  document.addEventListener('mouseover', e => {
+    const card = e.target.closest('[data-demon]');
+    if (card && gameState !== 'idle' && gameState !== 'ready') {
+      tip.textContent = card.getAttribute('data-demon');
+      tip.style.display = 'block';
+    }
+  });
+
+  document.addEventListener('mouseout', e => {
+    const card = e.target.closest('[data-demon]');
+    if (card) tip.style.display = 'none';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (tip.style.display === 'block') {
+      tip.style.left = (e.clientX + 14) + 'px';
+      tip.style.top  = (e.clientY - 30) + 'px';
+    }
+  });
+})();
+
+// =============================================
+// INIT
+// =============================================
+log('SUBDECADENCE :: LEMURIAN TIME-SORCERY ENGINE', 'system');
+log('Press NEW GAME to begin. Governed by the great lemur Tokhatto.', '');
+updateStatus();
+</script>
+</body>
+</html>
